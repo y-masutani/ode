@@ -885,7 +885,7 @@ if(ODE_WITH_DEMOS)
 
 			add_executable(${DEMO} WIN32 ${DEMO_SRC})
 			if(WIN32 AND MSVC)
-				set_target_properties(${DEMO} PROPERTIES LINK_FLAGS /ENTRY:mainCRTStartup)
+				set_target_properties(${DEMO} PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
 			endif()
 		endif()
 		target_link_libraries(${DEMO} drawstuff)

@@ -652,7 +652,7 @@ bool startupStuff()
                 break;
             }
 
-            allocateConsole();
+            //allocateConsole();
 
             g_drawstuffInitialized = true;
         }
