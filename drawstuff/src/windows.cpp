@@ -517,7 +517,16 @@ LRESULT CALLBACK mainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
             break;
         }
 
-        default: {
+        case WM_CLOSE:
+        {
+            // Do not destroy the window here.
+            // The rendering thread is still using the window DC.
+            PostQuitMessage (0);
+            return 0;
+        }
+
+        default:
+        {
             result = DefWindowProc(hWnd, msg, wParam, lParam);
             break;
         }
