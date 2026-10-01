@@ -27,6 +27,9 @@
 
 #include "drawstuff/drawstuff.h"
 
+#ifdef WIN32
+#include <string>
+#endif
 
 // supplied by platform specific code
 
@@ -36,6 +39,10 @@ void dsPlatformFinalizeConsole();
 void dsPlatformSimLoop (int window_width, int window_height,
 			dsFunctions *fn, int initial_pause);
 
+
+#ifdef WIN32
+std::string dsPlatformResolvePathFromExecutable (const char *path);
+#endif
 
 // used by platform specific code
 

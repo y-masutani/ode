@@ -35,6 +35,9 @@
 #include <tchar.h>
 #include <assert.h>
 
+#include <string>
+#include <vector>
+#include <cstring>
 
  //***************************************************************************
  // application globals
@@ -92,6 +95,114 @@ extern "C" void dsPrint(const char *msg, ...)
     va_start(ap, msg);
     vprintf(msg, ap);
     va_end(ap);
+}
+
+//***************************************************************************
+// path handling
+
+static std::string getExecutableDirectory ()
+{
+    std::vector<char> buffer (MAX_PATH);
+
+    for (;;)
+    {
+        DWORD length = GetModuleFileNameA (NULL, buffer.data (), static_cast<DWORD> (buffer.size ()));
+
+        if (length == 0)
+        {
+            dsError ("Could not get executable path");
+            return std::string (); // dsError() exits, but for completeness
+        }
+
+        // If the buffer was large enough, length is smaller than its size.
+        if (length < buffer.size ())
+        {
+            std::string executablePath (buffer.data (), length);
+
+            std::string::size_type pos = executablePath.find_last_of ("\\/");
+
+            if (pos == std::string::npos)
+            {
+                dsError ("Could not determine executable directory");
+                return std::string ();
+            }
+
+            return executablePath.substr (0, pos);
+        }
+
+        // GetModuleFileNameA() reported that the buffer was too small.
+        buffer.resize (buffer.size () * 2);
+    }
+}
+
+
+static bool isRootedPath (const char *path)
+{
+    if (path == NULL || path[0] == '\0')
+    {
+        return false;
+    }
+
+    size_t length = strlen (path);
+
+    // \foo
+    // /foo
+    // \\server\share
+    // \\?\C:\foo
+    if (path[0] == '\\' || path[0] == '/')
+    {
+        return true;
+    }
+
+    // C:\foo
+    // C:/foo
+    if (length >= 3 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':' &&
+        (path[2] == '\\' || path[2] == '/'))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+/*extern */
+std::string dsPlatformResolvePathFromExecutable (const char *path)
+{
+    if (path == NULL || path[0] == '\0')
+    {
+        return std::string ();
+    }
+
+    // Absolute/rooted path: use it as-is.
+    if (isRootedPath (path))
+    {
+        return std::string (path);
+    }
+
+    size_t length = strlen (path);
+
+    // "C:foo" is a Windows drive-relative path.
+    // Its meaning depends on the current directory of drive C:,
+    // so do not silently interpret it as executable-relative.
+    if (length >= 2 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':')
+    {
+        dsError ("Drive-relative path \"%s\" is not supported. "
+                 "Use either an absolute path or an executable-relative path.",
+                 path);
+        return std::string ();
+    }
+
+    std::string result = getExecutableDirectory ();
+
+    if (!result.empty () && result.back () != '\\' && result.back () != '/')
+    {
+        result += '\\';
+    }
+
+    result += path;
+
+    return result;
 }
 
 //***************************************************************************

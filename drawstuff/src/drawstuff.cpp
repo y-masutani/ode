@@ -41,6 +41,10 @@
 #include <windows.h>
 #endif
 
+#ifdef WIN32
+#include <string>
+#endif
+
 #include <ode/ode.h>
 #include "config.h"
 
@@ -918,28 +922,41 @@ static Texture *texture[4 + 1]; // +1 since index 0 is not used
 #if !defined(macintosh) || defined(ODE_PLATFORM_OSX)
 
 /*extern */
-void dsStartGraphics(int /*width*/, int /*height*/, dsFunctions *fn)
+void dsStartGraphics (int /*width*/, int /*height*/, dsFunctions *fn)
 {
-
     const char *prefix = DEFAULT_PATH_TO_TEXTURES;
-    if (fn->version >= 2 && fn->path_to_textures) prefix = fn->path_to_textures;
-    char *s = (char*)alloca(strlen(prefix) + 20);
 
-    strcpy(s, prefix);
-    strcat(s, "/sky.ppm");
-    texture[DS_SKY] = sky_texture = new Texture(s);
+#ifdef WIN32
+    std::string resolvedPrefix;
+#endif
 
-    strcpy(s, prefix);
-    strcat(s, "/ground.ppm");
-    texture[DS_GROUND] = ground_texture = new Texture(s);
+    if (fn->version >= 2 && fn->path_to_textures)
+    {
+#ifdef WIN32
+        resolvedPrefix = dsPlatformResolvePathFromExecutable (fn->path_to_textures);
+        prefix = resolvedPrefix.c_str ();
+#else
+        prefix = fn->path_to_textures;
+#endif
+    }
 
-    strcpy(s, prefix);
-    strcat(s, "/wood.ppm");
-    texture[DS_WOOD] = wood_texture = new Texture(s);
+    char *s = (char *) alloca (strlen (prefix) + 20);
 
-    strcpy(s, prefix);
-    strcat(s, "/checkered.ppm");
-    texture[DS_CHECKERED] = checkered_texture = new Texture(s);
+    strcpy (s, prefix);
+    strcat (s, "/sky.ppm");
+    texture[DS_SKY] = sky_texture = new Texture (s);
+
+    strcpy (s, prefix);
+    strcat (s, "/ground.ppm");
+    texture[DS_GROUND] = ground_texture = new Texture (s);
+
+    strcpy (s, prefix);
+    strcat (s, "/wood.ppm");
+    texture[DS_WOOD] = wood_texture = new Texture (s);
+
+    strcpy (s, prefix);
+    strcat (s, "/checkered.ppm");
+    texture[DS_CHECKERED] = checkered_texture = new Texture (s);
 }
 
 #else // macintosh
